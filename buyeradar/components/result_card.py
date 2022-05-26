@@ -1,10 +1,14 @@
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import *
 
+from func import trim_name
+
+
 class ResultCard(QWidget):
     def __init__(self, product):
         super().__init__()
         self.showUI(product)
+
 
     def showUI(self, product):
         self.resize(724, 200)
@@ -12,11 +16,11 @@ class ResultCard(QWidget):
         self.setMaximumSize(QtCore.QSize(16777215, 253))
         self.horizontalLayout = QHBoxLayout(self)
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
-        self.image_frame = QFrame(self)
-        self.image_frame.setMaximumSize(QtCore.QSize(250, 16777215))
-        self.image_frame.setFrameShape(QFrame.StyledPanel)
-        self.image_frame.setFrameShadow(QFrame.Raised)
-        self.horizontalLayout.addWidget(self.image_frame)
+        self.label_3 = QLabel(self)
+        self.label_3.setMinimumSize(QtCore.QSize(128, 128))
+        self.label_3.setMaximumSize(QtCore.QSize(175, 200))
+        self.label_3.setText("")
+        self.horizontalLayout.addWidget(self.label_3)
         self.main_frame = QFrame(self)
         self.main_frame.setStyleSheet("")
         self.main_frame.setFrameShape(QFrame.StyledPanel)
@@ -30,7 +34,7 @@ class ResultCard(QWidget):
         self.product_title.setSizePolicy(sizePolicy)
         font = QtGui.QFont()
         font.setFamily("Segoe UI")
-        font.setPointSize(18)
+        font.setPointSize(14)
         font.setBold(True)
         font.setWeight(75)
         self.product_title.setFont(font)
@@ -42,11 +46,27 @@ class ResultCard(QWidget):
         sizePolicy.setHeightForWidth(self.source_label.sizePolicy().hasHeightForWidth())
         self.source_label.setSizePolicy(sizePolicy)
         font = QtGui.QFont()
-        font.setPointSize(12)
+        font.setPointSize(10)
+        font.setBold(False)
+        font.setWeight(50)
         self.source_label.setFont(font)
         self.verticalLayout.addWidget(self.source_label)
+        self.label = QLabel(self.main_frame)
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        self.label.setFont(font)
+        self.label.setStyleSheet("color: rgb(202, 202, 202);")
+        self.verticalLayout.addWidget(self.label)
         spacerItem = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
         self.verticalLayout.addItem(spacerItem)
+        self.label_2 = QLabel(self.main_frame)
+        font = QtGui.QFont()
+        font.setFamily("Segoe UI")
+        font.setPointSize(16)
+        font.setBold(True)
+        font.setWeight(75)
+        self.label_2.setFont(font)
+        self.verticalLayout.addWidget(self.label_2)
         self.track_button = QPushButton(self.main_frame)
         sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -63,7 +83,8 @@ class ResultCard(QWidget):
         self.verticalLayout.addWidget(self.track_button)
         self.horizontalLayout.addWidget(self.main_frame)
 
-        self.product_title.setText(product.name)
+        self.product_title.setText(trim_name(product.name))
         self.source_label.setText("Fetched from Amazon.com")
+        self.label.setText(f"ID: {product.id}")
+        self.label_2.setText(f"INR {product.price}")
         self.track_button.setText("Track")
-        

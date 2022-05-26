@@ -3,10 +3,11 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 
 class Product():
-    def __init__(self, id, name, image_url="https://user-images.githubusercontent.com/24848110/33519396-7e56363c-d79d-11e7-969b-09782f5ccbab.png"):
+    def __init__(self, id, price, name, image_url="https://user-images.githubusercontent.com/24848110/33519396-7e56363c-d79d-11e7-969b-09782f5ccbab.png"):
         self.id = id
         self.name = name
         self.image_url = image_url
+        self.price = price
 
 def fetch_amazon_html(query, mwindow):
     ubar = mwindow.update_bar
@@ -46,6 +47,10 @@ def scrape_html(soup, mwindow):
     _x = 0
     for product in product_soups:
 
+        # Get the displayed price of the product from HTML
+        price = product.select_one("span[class*='price-whole']").text
+        print(price)
+
         # Fetch the product title from HTML
         name = product.select_one(
             "span[class*='a-size-medium']").text
@@ -53,9 +58,13 @@ def scrape_html(soup, mwindow):
         # Get the image URL from HTML
         image_url = product.select_one("img[class*='s-image']").attrs['src']
 
-        product = Product(id=product_ids[_x], name=name, image_url=image_url)
+        product = Product(id=product_ids[_x], price=price, name=name, image_url=image_url)
         product_objects.append(product)
         _x +=1
         ubar(5)
 
     return product_objects
+
+
+def trim_name(string):
+    return (string[:50] + '..') if len(string) > 50 else string
