@@ -1,6 +1,8 @@
 from PyQt5.QtWidgets import QApplication
 from bs4 import BeautifulSoup
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+
 
 class Product():
     def __init__(self, id, price, name, image_url="https://user-images.githubusercontent.com/24848110/33519396-7e56363c-d79d-11e7-969b-09782f5ccbab.png"):
@@ -13,9 +15,11 @@ def fetch_amazon_html(query, mwindow):
     ubar = mwindow.update_bar
 
     # Uses selenium to scrape off the needed information by launching a browser
-    # instance and then automatically fetches the required information.
+    # instance and then automatically fetches the required information.\
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
     QApplication.processEvents() # Used to prevent application from not responding while searching is going on
-    driver = webdriver.Chrome()
+    driver = webdriver.Chrome(chrome_options=chrome_options)
     ubar(10)
 
     # Amazon uses the following syntax for the queries: 
@@ -48,7 +52,10 @@ def scrape_html(soup, mwindow):
     for product in product_soups:
 
         # Get the displayed price of the product from HTML
-        price = product.select_one("span[class*='price-whole']").text
+        try:
+            price = product.select_one("span[class*='price-whole']").text
+        except AttributeError:
+            price = 'NAN'
         print(price)
 
         # Fetch the product title from HTML
