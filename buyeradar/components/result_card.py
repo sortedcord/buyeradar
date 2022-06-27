@@ -1,5 +1,6 @@
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import *
+import requests
 
 from func import trim_name
 
@@ -19,7 +20,6 @@ class ResultCard(QWidget):
         self.label_3 = QLabel(self)
         self.label_3.setMinimumSize(QtCore.QSize(128, 128))
         self.label_3.setMaximumSize(QtCore.QSize(175, 200))
-        self.label_3.setText("")
         self.horizontalLayout.addWidget(self.label_3)
         self.main_frame = QFrame(self)
         self.main_frame.setStyleSheet("")
@@ -88,3 +88,7 @@ class ResultCard(QWidget):
         self.label.setText(f"ID: {product.id}")
         self.label_2.setText(f"INR {product.price}")
         self.track_button.setText("Track")
+
+        self.image = QtGui.QImage()
+        self.image.loadFromData(requests.get(product.image_url).content)
+        self.label_3.setPixmap(QtGui.QPixmap(self.image))

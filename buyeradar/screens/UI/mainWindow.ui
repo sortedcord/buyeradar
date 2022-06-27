@@ -28,119 +28,153 @@
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QFrame" name="frame">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
+       <number>0</number>
       </property>
-      <property name="maximumSize">
-       <size>
-        <width>16777215</width>
-        <height>75</height>
-       </size>
-      </property>
-      <property name="frameShape">
-       <enum>QFrame::StyledPanel</enum>
-      </property>
-      <property name="frameShadow">
-       <enum>QFrame::Raised</enum>
-      </property>
-      <layout class="QHBoxLayout" name="horizontalLayout">
-       <property name="leftMargin">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <item>
-        <widget class="QTextEdit" name="search_query_textbox">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>34</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>34</height>
-          </size>
-         </property>
-         <property name="font">
-          <font>
-           <family>Segoe UI</family>
-           <pointsize>10</pointsize>
-          </font>
-         </property>
-         <property name="placeholderText">
-          <string>Enter Product URL or Search Query</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QComboBox" name="comboBox">
-         <property name="minimumSize">
-          <size>
-           <width>175</width>
-           <height>34</height>
-          </size>
-         </property>
-         <property name="font">
-          <font>
-           <family>Segoe UI</family>
-           <pointsize>10</pointsize>
-          </font>
-         </property>
-         <item>
-          <property name="text">
-           <string>Relevance</string>
+      <widget class="QWidget" name="search_tab">
+       <attribute name="title">
+        <string>Search</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <property name="spacing">
+         <number>0</number>
+        </property>
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QFrame" name="frame">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
           </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>Price: High to Low</string>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>75</height>
+           </size>
           </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>Price: Low to High</string>
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
           </property>
-         </item>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="search_button">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>34</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>Search</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-    </item>
-    <item>
-     <widget class="QScrollArea" name="scrollArea">
-      <property name="widgetResizable">
-       <bool>true</bool>
-      </property>
-      <widget class="QWidget" name="scrollAreaWidgetContents">
-       <property name="geometry">
-        <rect>
-         <x>0</x>
-         <y>0</y>
-         <width>781</width>
-         <height>324</height>
-        </rect>
-       </property>
-       <layout class="QVBoxLayout" name="verticalLayout_2"/>
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout">
+           <property name="leftMargin">
+            <number>9</number>
+           </property>
+           <property name="rightMargin">
+            <number>9</number>
+           </property>
+           <item>
+            <widget class="QTextEdit" name="search_query_textbox">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>34</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>34</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Segoe UI</family>
+               <pointsize>10</pointsize>
+              </font>
+             </property>
+             <property name="placeholderText">
+              <string>Enter Product URL or Search Query</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QComboBox" name="comboBox">
+             <property name="minimumSize">
+              <size>
+               <width>175</width>
+               <height>34</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>Segoe UI</family>
+               <pointsize>10</pointsize>
+              </font>
+             </property>
+             <item>
+              <property name="text">
+               <string>Relevance</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Price: High to Low</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Price: Low to High</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="search_button">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>34</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Search</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QScrollArea" name="scrollArea">
+          <property name="widgetResizable">
+           <bool>true</bool>
+          </property>
+          <widget class="QWidget" name="scrollAreaWidgetContents">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>781</width>
+             <height>312</height>
+            </rect>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_2"/>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tracking_tab">
+       <attribute name="title">
+        <string>Tracking</string>
+       </attribute>
       </widget>
      </widget>
     </item>
@@ -168,7 +202,7 @@
        <bool>true</bool>
       </property>
       <property name="plainText">
-       <string>fdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadffdfadsfadfadfadfadf</string>
+       <string/>
       </property>
       <property name="backgroundVisible">
        <bool>false</bool>
@@ -199,7 +233,7 @@
      <x>0</x>
      <y>0</y>
      <width>805</width>
-     <height>26</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
