@@ -59,8 +59,17 @@ def scrape_html(soup, mwindow):
         print(price)
 
         # Fetch the product title from HTML
-        name = product.select_one(
-            "span[class*='a-size-medium']").text
+        try:
+            name = product.select_one(
+                "span[class*='a-size-medium']").text
+        except AttributeError:
+            try:
+                name = product.select_one(
+                    "span[class*='a-size-base-plus']").text
+            except AttributeError:
+                name = 'NAN'
+
+            
 
         # Get the image URL from HTML
         image_url = product.select_one("img[class*='s-image']").attrs['src']
