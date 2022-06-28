@@ -8,9 +8,6 @@ from func import fetch_amazon_html, scrape_html
 from components.result_card import ResultCard
 
 
-CONSOLE_TEXT = ""
-CONSOLE = None
-
 
 class MainWindow(QMainWindow):
     def update_bar(self, value):
@@ -18,95 +15,134 @@ class MainWindow(QMainWindow):
             self.progressBar.setProperty("value",self.progressBar.value()+value)
 
     def search_button_clicked(self):
-        for i in reversed(range(self.verticalLayout_2.count())): 
-            self.verticalLayout_2.itemAt(i).widget().setParent(None)
-
-        global CONSOLE, CONSOLE_TEXT
-        CONSOLE_TEXT += "Search Button Clicked \n"
-        CONSOLE.setPlainText(CONSOLE_TEXT)
-
         search_query = self.search_query_textbox.toPlainText()
-        CONSOLE_TEXT += f"Search Query Set as {search_query}\n\n"
-        pg_val = self.progressBar.setProperty
-        pg_val('value',0)
-        soup = fetch_amazon_html(search_query, self)
-        results = scrape_html(soup, self)
-        pg_val('value', 100)
-       
 
-        for result in results:
-            card = ResultCard(result)
-            self.verticalLayout_2.addWidget(card)
-            
+        # Validating search query to be blank or not
+        if search_query is None or search_query == "" or search_query.isspace():
+            self.updateConsole("Search query cannot be blank")
+
+        else:
+            self.updateConsole(f"Search Query set as {search_query}")
+
+            # Remove all exisiting results
+            for i in reversed(range(self.result_area_vertical_layout.count())): 
+                self.result_area_vertical_layout.itemAt(i).widget().setParent(None)
+
+            pg_val = self.progressBar.setProperty
+            pg_val('value',0)
+            soup = fetch_amazon_html(search_query, self,debugfile="test.txt")
+            results = scrape_html(soup, self)
+            pg_val('value', 100)
+
+            # Show results
+            self.updateConsole("Creating Result Cards")
+            QApplication.processEvents()
+            i = 0
+            for result in results:
+                card = ResultCard(result)
+                self.result_area_vertical_layout.addWidget(card)
+                i+=1
 
         
 
     def setupUi(self):
-        global CONSOLE_TEXT, CONSOLE
+        self.CONSOLE_TEXT = ""
+
+        self.setWindowTitle("Buyeradar")
 
         # Creation of the Application UI
         self.resize(805, 719)
-        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
-        self.setSizePolicy(sizePolicy)
+
+        # Central Widget
         self.centralwidget = QWidget(self)
-        sizePolicy = QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.centralwidget.sizePolicy().hasHeightForWidth())
-        self.centralwidget.setSizePolicy(sizePolicy)
-        self.verticalLayout = QVBoxLayout(self.centralwidget)
+
+        # Central Widget Layout 
+        self.central_vertical_layout = QVBoxLayout(self.centralwidget)
+
+        # Tab Widget
         self.tabWidget = QTabWidget(self.centralwidget)
+        self.central_vertical_layout.addWidget(self.tabWidget)
+
+
+        """
+        ███████ ███████  █████  ██████   ██████ ██   ██ 
+        ██      ██      ██   ██ ██   ██ ██      ██   ██ 
+        ███████ █████   ███████ ██████  ██      ███████ 
+             ██ ██      ██   ██ ██   ██ ██      ██   ██ 
+        ███████ ███████ ██   ██ ██   ██  ██████ ██   ██ 
+        """
+
         self.search_tab = QWidget()
-        self.verticalLayout_3 = QVBoxLayout(self.search_tab)
-        self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
-        self.verticalLayout_3.setSpacing(0)
-        self.frame = QFrame(self.search_tab)
-        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.frame.sizePolicy().hasHeightForWidth())
-        self.frame.setSizePolicy(sizePolicy)
-        self.frame.setMaximumSize(QtCore.QSize(16777215, 75))
-        self.frame.setFrameShape(QFrame.StyledPanel)
-        self.frame.setFrameShadow(QFrame.Raised)
-        self.horizontalLayout = QHBoxLayout(self.frame)
+        self.search_tab_vertical_layout = QVBoxLayout(self.search_tab)
+        self.search_tab_vertical_layout.setContentsMargins(0, 0, 0, 0)
+        self.search_tab_vertical_layout.setSpacing(0)
+        self.tabWidget.addTab(self.search_tab, "Search")
+
+        self.search_tab_frame = QFrame(self.search_tab)
+        self.search_tab_frame.setMaximumSize(QtCore.QSize(16777215, 75))
+        self.search_tab_frame.setFrameShape(QFrame.StyledPanel)
+        self.search_tab_frame.setFrameShadow(QFrame.Raised)
+        self.search_tab_vertical_layout.addWidget(self.search_tab_frame)
+
+        # Search Controls
+        self.horizontalLayout = QHBoxLayout(self.search_tab_frame)
         self.horizontalLayout.setContentsMargins(9, -1, 9, -1)
-        self.search_query_textbox = QTextEdit(self.frame)
+
+        self.search_query_textbox = QTextEdit(self.search_tab_frame)
         self.search_query_textbox.setMinimumSize(QtCore.QSize(0, 34))
         self.search_query_textbox.setMaximumSize(QtCore.QSize(16777215, 34))
         font = QtGui.QFont()
-        font.setFamily("Segoe UI")
         font.setPointSize(10)
         self.search_query_textbox.setFont(font)
         self.horizontalLayout.addWidget(self.search_query_textbox)
-        self.comboBox = QComboBox(self.frame)
+
+        self.comboBox = QComboBox(self.search_tab_frame)
         self.comboBox.setMinimumSize(QtCore.QSize(175, 34))
-        font = QtGui.QFont()
-        font.setFamily("Segoe UI")
-        font.setPointSize(10)
+        
         self.comboBox.setFont(font)
-        self.comboBox.addItem("")
-        self.comboBox.addItem("")
-        self.comboBox.addItem("")
+        self.comboBox.addItem("Relevence")
+        self.comboBox.addItem("Price: High to Low")
+        self.comboBox.addItem("Price: Low to High")
         self.horizontalLayout.addWidget(self.comboBox)
-        self.search_button = QPushButton(self.frame)
+
+        self.search_button = QPushButton(self.search_tab_frame)
         self.search_button.setMinimumSize(QtCore.QSize(0, 34))
         self.horizontalLayout.addWidget(self.search_button)
-        self.verticalLayout_3.addWidget(self.frame)
+        # End Search Controls
+
+        # Result Area
         self.scrollArea = QScrollArea(self.search_tab)
         self.scrollArea.setWidgetResizable(True)
+
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 781, 312))
-        self.verticalLayout_2 = QVBoxLayout(self.scrollAreaWidgetContents)
+
+        self.result_area_vertical_layout = QVBoxLayout(self.scrollAreaWidgetContents)
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
-        self.verticalLayout_3.addWidget(self.scrollArea)
-        self.tabWidget.addTab(self.search_tab, "")
+        self.search_tab_vertical_layout.addWidget(self.scrollArea)
+        # End Result Area
+
+        """        
+     ████████ ██████   █████   ██████ ██   ██ ██ ███    ██  ██████  
+        ██    ██   ██ ██   ██ ██      ██  ██  ██ ████   ██ ██       
+        ██    ██████  ███████ ██      █████   ██ ██ ██  ██ ██   ███ 
+        ██    ██   ██ ██   ██ ██      ██  ██  ██ ██  ██ ██ ██    ██ 
+        ██    ██   ██ ██   ██  ██████ ██   ██ ██ ██   ████  ██████                                                                                                                             
+        """
+
         self.tracking_tab = QWidget()
-        self.tabWidget.addTab(self.tracking_tab, "")
-        self.verticalLayout.addWidget(self.tabWidget)
+        self.tabWidget.addTab(self.tracking_tab, "Tracking")
+
+
+        """
+         ██████  ██████  ████████ ██  ██████  ███    ██ ███████ 
+        ██    ██ ██   ██    ██    ██ ██    ██ ████   ██ ██      
+        ██    ██ ██████     ██    ██ ██    ██ ██ ██  ██ ███████ 
+        ██    ██ ██         ██    ██ ██    ██ ██  ██ ██      ██ 
+         ██████  ██         ██    ██  ██████  ██   ████ ███████                                                                                                             
+        """
+
+        
         self.console_log = QPlainTextEdit(self.centralwidget)
         self.console_log.setEnabled(True)
         self.console_log.setMaximumSize(QtCore.QSize(16777215, 200))
@@ -118,11 +154,11 @@ class MainWindow(QMainWindow):
         self.console_log.setBackgroundVisible(False)
         self.console_log.setCenterOnScroll(True)
         self.console_log.setPlaceholderText("")
-        self.verticalLayout.addWidget(self.console_log)
+        self.central_vertical_layout.addWidget(self.console_log)
         self.progressBar = QProgressBar(self.centralwidget)
         self.progressBar.setProperty("value", 0)
         self.progressBar.setTextVisible(False)
-        self.verticalLayout.addWidget(self.progressBar)
+        self.central_vertical_layout.addWidget(self.progressBar)
         self.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(self)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 805, 22))
@@ -146,18 +182,12 @@ class MainWindow(QMainWindow):
         # Translation of UI Elements
 
         self.tabWidget.setCurrentIndex(0)
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.search_tab), "Search")
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tracking_tab), "Tracking")
 
 
-        CONSOLE_TEXT += "Created UI successfully\n"
 
-        self.setWindowTitle("Product $ Tracker")
+        
         self.search_query_textbox.setPlaceholderText(
             "Enter Product URL or Search Query")
-        self.comboBox.setItemText(0, "Relevance")
-        self.comboBox.setItemText(1, "Price: High to Low")
-        self.comboBox.setItemText(2, "Price: Low to High")
         self.search_button.setText("Search")
         self.menuFile.setTitle("File")
         self.menuSettings.setTitle("Settings")
@@ -165,12 +195,14 @@ class MainWindow(QMainWindow):
         self.actionQuit.setText("Quit")
         self.actionShow_Logs.setText("Show Logs")
 
-        CONSOLE_TEXT += "Product $ Tracker v0.0.1 \nLoaded Application Successfully\n"
-        self.console_log.setPlainText(CONSOLE_TEXT)
-        CONSOLE = self.console_log
-        CONSOLE_TEXT = self.console_log.toPlainText()
+        self.updateConsole("Buyeradar v0.0.1")
+        self.updateConsole("")
+        self.updateConsole("")
 
         self.search_button.clicked.connect(self.search_button_clicked)
 
-
+    def updateConsole(self, message):
+        self.CONSOLE_TEXT += message + "\n"
+        self.console_log.setPlainText(self.CONSOLE_TEXT)
+        self.console_log.moveCursor(QtGui.QTextCursor.End)
 
