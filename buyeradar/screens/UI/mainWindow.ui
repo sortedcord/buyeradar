@@ -227,7 +227,7 @@
     </item>
    </layout>
   </widget>
-  <widget class="QMenuBar" name="menubar">
+  <widget class="QMenupdate_bar" name="menupdate_bar">
    <property name="geometry">
     <rect>
      <x>0</x>

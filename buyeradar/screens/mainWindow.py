@@ -1,18 +1,17 @@
-from PyQt5 import QtCore
-from PyQt5.QtWidgets import *
-from PyQt5 import QtGui
-
-
-from func import fetch_amazon_html, scrape_html
-
 from components.result_card import ResultCard
-
+from func import fetch_amazon_html, scrape_html
+from PyQt5 import QtGui
+from PyQt5.QtWidgets import *
+from PyQt5 import QtCore
+DEBUG = False
+# To learn more about debug mode go to https://github.com/sortedcord/bueradar#debug-mode
 
 
 class MainWindow(QMainWindow):
     def update_bar(self, value):
-        if self.progressBar.value()< 100:
-            self.progressBar.setProperty("value",self.progressBar.value()+value)
+        if self.progressBar.value() < 100:
+            self.progressBar.setProperty(
+                "value", self.progressBar.value()+value)
 
     def search_button_clicked(self):
         search_query = self.search_query_textbox.toPlainText()
@@ -25,12 +24,14 @@ class MainWindow(QMainWindow):
             self.updateConsole(f"Search Query set as {search_query}")
 
             # Remove all exisiting results
-            for i in reversed(range(self.result_area_vertical_layout.count())): 
-                self.result_area_vertical_layout.itemAt(i).widget().setParent(None)
+            for i in reversed(range(self.result_area_vertical_layout.count())):
+                self.result_area_vertical_layout.itemAt(
+                    i).widget().setParent(None)
 
             pg_val = self.progressBar.setProperty
-            pg_val('value',0)
-            soup = fetch_amazon_html(search_query, self,debugfile="test.txt")
+            pg_val('value', 0)
+            soup = fetch_amazon_html(
+                search_query, self, DEBUG, debugfile="test.txt")
             results = scrape_html(soup, self)
             pg_val('value', 100)
 
@@ -41,9 +42,7 @@ class MainWindow(QMainWindow):
             for result in results:
                 card = ResultCard(result)
                 self.result_area_vertical_layout.addWidget(card)
-                i+=1
-
-        
+                i += 1
 
     def setupUi(self):
         self.CONSOLE_TEXT = ""
@@ -56,13 +55,12 @@ class MainWindow(QMainWindow):
         # Central Widget
         self.centralwidget = QWidget(self)
 
-        # Central Widget Layout 
+        # Central Widget Layout
         self.central_vertical_layout = QVBoxLayout(self.centralwidget)
 
         # Tab Widget
         self.tabWidget = QTabWidget(self.centralwidget)
         self.central_vertical_layout.addWidget(self.tabWidget)
-
 
         """
         ███████ ███████  █████  ██████   ██████ ██   ██ 
@@ -98,7 +96,7 @@ class MainWindow(QMainWindow):
 
         self.comboBox = QComboBox(self.search_tab_frame)
         self.comboBox.setMinimumSize(QtCore.QSize(175, 34))
-        
+
         self.comboBox.setFont(font)
         self.comboBox.addItem("Relevence")
         self.comboBox.addItem("Price: High to Low")
@@ -117,7 +115,8 @@ class MainWindow(QMainWindow):
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 781, 312))
 
-        self.result_area_vertical_layout = QVBoxLayout(self.scrollAreaWidgetContents)
+        self.result_area_vertical_layout = QVBoxLayout(
+            self.scrollAreaWidgetContents)
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
         self.search_tab_vertical_layout.addWidget(self.scrollArea)
         # End Result Area
@@ -133,7 +132,6 @@ class MainWindow(QMainWindow):
         self.tracking_tab = QWidget()
         self.tabWidget.addTab(self.tracking_tab, "Tracking")
 
-
         """
          ██████  ██████  ████████ ██  ██████  ███    ██ ███████ 
         ██    ██ ██   ██    ██    ██ ██    ██ ████   ██ ██      
@@ -142,13 +140,30 @@ class MainWindow(QMainWindow):
          ██████  ██         ██    ██  ██████  ██   ████ ███████                                                                                                             
         """
 
-        
+        self.options_tab = QWidget()
+        self.tabWidget.addTab(self.options_tab, "Options")
+
+        self.options_tab_vertical_layout = QVBoxLayout(self.options_tab)
+        self.options_tab_vertical_layout.setContentsMargins(0, 0, 0, 0)
+        self.options_tab_vertical_layout.setSpacing(0)
+
+        # Create a checkbox with text "Debug" and add it to vertitcal layout of options tab
+        self.debug_checkbox = QCheckBox(self.options_tab)
+        self.debug_checkbox.setText("Debug")
+        self.options_tab_vertical_layout.addWidget(self.debug_checkbox)
+
+        # If debug_checkbox is checked then set debug to True else set debug to False
+        self.debug_checkbox.stateChanged.connect(
+            lambda: self.set_debug(self.debug_checkbox.isChecked()))
+
         self.console_log = QPlainTextEdit(self.centralwidget)
         self.console_log.setEnabled(True)
         self.console_log.setMaximumSize(QtCore.QSize(16777215, 200))
         self.console_log.setFrameShadow(QFrame.Sunken)
-        self.console_log.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
-        self.console_log.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
+        self.console_log.setVerticalScrollBarPolicy(
+            QtCore.Qt.ScrollBarAlwaysOn)
+        self.console_log.setSizeAdjustPolicy(
+            QAbstractScrollArea.AdjustToContents)
         self.console_log.setReadOnly(True)
         self.console_log.setPlainText("")
         self.console_log.setBackgroundVisible(False)
@@ -160,12 +175,12 @@ class MainWindow(QMainWindow):
         self.progressBar.setTextVisible(False)
         self.central_vertical_layout.addWidget(self.progressBar)
         self.setCentralWidget(self.centralwidget)
-        self.menubar = QMenuBar(self)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 805, 22))
-        self.menuFile = QMenu(self.menubar)
-        self.menuSettings = QMenu(self.menubar)
-        self.menuAbout = QMenu(self.menubar)
-        self.setMenuBar(self.menubar)
+        self.menupdate_bar = QMenuBar(self)
+        self.menupdate_bar.setGeometry(QtCore.QRect(0, 0, 805, 22))
+        self.menuFile = QMenu(self.menupdate_bar)
+        self.menuSettings = QMenu(self.menupdate_bar)
+        self.menuAbout = QMenu(self.menupdate_bar)
+        self.setMenuBar(self.menupdate_bar)
         self.statusbar = QStatusBar(self)
         self.setStatusBar(self.statusbar)
         self.actionQuit = QAction(self)
@@ -173,9 +188,9 @@ class MainWindow(QMainWindow):
         self.actionShow_Logs.setCheckable(True)
         self.menuFile.addAction(self.actionQuit)
         self.menuSettings.addAction(self.actionShow_Logs)
-        self.menubar.addAction(self.menuFile.menuAction())
-        self.menubar.addAction(self.menuSettings.menuAction())
-        self.menubar.addAction(self.menuAbout.menuAction())
+        self.menupdate_bar.addAction(self.menuFile.menuAction())
+        self.menupdate_bar.addAction(self.menuSettings.menuAction())
+        self.menupdate_bar.addAction(self.menuAbout.menuAction())
 
         self.show()
 
@@ -183,9 +198,6 @@ class MainWindow(QMainWindow):
 
         self.tabWidget.setCurrentIndex(0)
 
-
-
-        
         self.search_query_textbox.setPlaceholderText(
             "Enter Product URL or Search Query")
         self.search_button.setText("Search")
@@ -206,3 +218,6 @@ class MainWindow(QMainWindow):
         self.console_log.setPlainText(self.CONSOLE_TEXT)
         self.console_log.moveCursor(QtGui.QTextCursor.End)
 
+    def set_debug(self, debug):
+        self.DEBUG = debug
+        self.updateConsole("Debug set to " + str(self.DEBUG))

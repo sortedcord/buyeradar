@@ -11,53 +11,68 @@ class Product():
         self.image_url = image_url
         self.price = price
 
-def fetch_amazon_html(query, mwindow, debugfile=None):
-    ubar = mwindow.update_bar
-    ucon= mwindow.updateConsole
+def fetch_amazon_html(query, mwindow, debug, debugfile=None):
+    # update_bar and update_console are variables that are used to update the progress bar and console
+    update_bar = mwindow.update_bar
+    update_console= mwindow.updateConsole
 
-    if debugfile is not None:
+    if debugfile is not None and debug:
         try:
             with open(debugfile) as f:
                 lines = f.read()
+                # if the file is empty, update using suitable message and set debug to false
+                if lines == '':
+                    update_console('given debug file is empty')
+                    update_console('Fetching HTML from online source')
+                    debug = 'force'
+                    
         except:
-            ucon("Could not read file")
-        return BeautifulSoup(lines, 'lxml')
+            update_console("Could not read file")
+            update_console('Fetching HTML from online source')
+            debug = 'force'
+        else:
+            if debug != 'force':
+                return BeautifulSoup(lines, 'lxml')
+                
 
+    if not debug or debug == 'force':
+        # Uses selenium to scrape off the needed information by launching a browser
+        # instance and then automatically fetches the required information.
+        mwindow.updateConsole("Setting Chrome Options")
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")
+        QApplication.processEvents() # Used to prevent application from not responding while searching is going on
+        driver = webdriver.Chrome(chrome_options=chrome_options)
+        update_bar(10)
 
-    # Uses selenium to scrape off the needed information by launching a browser
-    # instance and then automatically fetches the required information.
-    mwindow.updateConsole("Setting Chrome Options")
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    QApplication.processEvents() # Used to prevent application from not responding while searching is going on
-    driver = webdriver.Chrome(chrome_options=chrome_options)
-    ubar(10)
+        # Amazon uses the following syntax for the queries: 
+        # If you search for heavy chainsaw, it becomes 'heavy+chainsaw' in the URL
+        query.replace(' ','+')
+        url = f"https://www.amazon.in/s?k={query}"
+        update_bar(20)
 
-    # Amazon uses the following syntax for the queries: 
-    # If you search for heavy chainsaw, it becomes 'heavy+chainsaw' in the URL
-    query.replace(' ','+')
-    url = f"https://www.amazon.in/s?k={query}"
-    ubar(20)
+        update_console("Fetching Page URL")
+        try:
+            driver.get(url)
+        except:
+            update_console("Could not fetch data")
+            return
+        else:
+            update_console("Fetched HTML successfully")
+        update_bar(35)
 
-    ucon("Fetching Page URL")
-    try:
-        driver.get(url)
-    except:
-        ucon("Could not fetch data")
-        return
-    else:
-        ucon("Fetched HTML successfully")
-    ubar(35)
-
-    # Using beautiful soup to fetch the required info from the generated HTML
-    # with open("test.txt", "w+") as f:
-    #     f.write(driver.page_source)
-    return BeautifulSoup(driver.page_source, 'lxml')
+        if debug == 'force':
+        # Using beautiful soup to fetch the required info from the generated HTML
+            with open("test.txt", "w+") as f:
+                f.write(driver.page_source)
+                # Update console with suitable message
+                update_console("Saved HTML to test.txt")
+        return BeautifulSoup(driver.page_source, 'lxml')
     
 
 def scrape_html(soup, mwindow):
-    ubar = mwindow.update_bar
-    ucon= mwindow.updateConsole
+    update_bar = mwindow.update_bar
+    update_console= mwindow.updateConsole
 
     # We will now find all the <div> elements that have the s-search-result property.
     product_soups = soup.find_all(
@@ -65,9 +80,9 @@ def scrape_html(soup, mwindow):
     
     # Fetch the product IDs
     product_ids = [_.attrs['data-asin'] for _ in product_soups]
-    ucon("Fetched Product IDs")
+    update_console("Fetched Product IDs")
     
-    ubar(5)
+    update_bar(5)
     product_objects = []
 
     _x = 0
@@ -76,13 +91,13 @@ def scrape_html(soup, mwindow):
             break
         # Get the displayed price of the product from HTML
 
-        ucon(f"[Product {_x+1}] Fetching Price")
+        update_console(f"[Product {_x+1}] Fetching Price")
         try:
             price = product.select_one("span[class*='price-whole']").text
         except AttributeError:
             price = 'NAN'
         else:
-            ucon(f"[Product {_x+1}] Fetched Price Successfully")
+            update_console(f"[Product {_x+1}] Fetched Price Successfully")
         
 
         # Fetch the product title from HTML
@@ -96,30 +111,30 @@ def scrape_html(soup, mwindow):
             except AttributeError:
                 name = 'NAN'
             else:
-                ucon(f"[Product {_x+1}] Fetched name successfully")
+                update_console(f"[Product {_x+1}] Fetched name successfully")
         else:
-            ucon(f"[Product {_x+1}] Fetched name successfully")
+            update_console(f"[Product {_x+1}] Fetched name successfully")
 
 
         # Get the image URL from HTML
         try:
             image_url = product.select_one("img[class*='s-image']").attrs['src']
         except:
-            ucon(f"[Product {_x+1}] Could not fetch image URL")
+            update_console(f"[Product {_x+1}] Could not fetch image URL")
         else:
-            ucon(f"[Product {_x+1}] Fetched image URL")
+            update_console(f"[Product {_x+1}] Fetched image URL")
 
-        ucon(f"[Product {_x+1}] Creating Product Object")
+        update_console(f"[Product {_x+1}] Creating Product Object")
         product = Product(id=product_ids[_x], price=price, name=name, image_url=image_url)
-        ucon(f"[Product {_x+1}] Created Product Object")
+        update_console(f"[Product {_x+1}] Created Product Object")
         product_objects.append(product)
-        ucon(f"[Product {_x+1}] Added to search result list")
+        update_console(f"[Product {_x+1}] Added to search result list")
         _x +=1
-        ubar(5)
+        update_bar(5)
 
-    ucon("Parsed Product Objects from fetched HTML")
+    update_console("Parsed Product Objects from fetched HTML")
     return product_objects
 
 
 def trim_name(string):
-    return (string[:50] + '..') if len(string) > 50 else string
+    return (string[:50] + '..') if len(string) > 50 else string 
