@@ -5,7 +5,7 @@ import requests
 from func import trim_name
 
 
-class ResultCard(QWidget):
+class TrackCard(QWidget):
     def __init__(self, product):
         super().__init__()
         self.showUI(product)
@@ -80,9 +80,9 @@ class ResultCard(QWidget):
         self.verticalLayout_2.addWidget(self.track_button_2)
         self.horizontalLayout.addWidget(self.main_frame)
 
-        self.product_title_2.setText("Lorem Ipsum Product")
-        self.source_label_2.setText("Fetched from Amazon.com")
-        self.label_4.setText("ID: B9we8frw9")
-        self.label_5.setText("CURRENTLY: INR 450")
-        self.label_3.setText("Max: Mix: Avg: ")
-        self.track_button_2.setText("View Price History")
+        self.product_title_2.setText(trim_name(product.name))
+        self.source_label_2.setText(f"Fetched from {product.source}")
+        self.label_4.setText(f"ID: {product.id}")
+        self.label_5.setText(f"CURRENTLY: INR {product.price}")
+        self.label_3.setText("Max: Min: Avg: ")
+        self.track_button_2.setText("View")

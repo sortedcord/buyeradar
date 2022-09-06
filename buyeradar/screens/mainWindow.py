@@ -1,10 +1,14 @@
 from components.result_card import ResultCard
-from func import fetch_amazon_html, scrape_html
+from components.track_card import TrackCard
+from func import fetch_amazon_html, scrape_html, save_to_database, load_from_database, Product
 from PyQt5 import QtGui
 from PyQt5.QtWidgets import *
 from PyQt5 import QtCore
-DEBUG = False
-# To learn more about debug mode go to https://github.com/sortedcord/bueradar#debug-mode
+
+OPTIONS = {
+    "debug": False,
+    "show-images": True,
+}
 
 
 class MainWindow(QMainWindow):
@@ -31,9 +35,34 @@ class MainWindow(QMainWindow):
             pg_val = self.progressBar.setProperty
             pg_val('value', 0)
             soup = fetch_amazon_html(
-                search_query, self, DEBUG, debugfile="test.txt")
-            results = scrape_html(soup, self)
+                search_query, self, OPTIONS["debug"], debugfile="test.txt")
+
+            # if soup is none, then it means that no results were found
+            if soup is None:
+                self.updateConsole("No results found")
+                return
+
+            # if soup is a Product object
+            if isinstance(soup, Product):
+                results = [soup]
+            else:
+                results = scrape_html(soup, self)
+                if results is None:
+                    pg_val('value', 100)
+                    self.updateConsole("No results found")
+                    return
+
             pg_val('value', 100)
+
+            # Sort the results based on what the user selected from
+            # the combolist
+
+            if self.comboBox.currentText() == "Price: Low to High":
+                results = sorted(
+                    results, key=lambda x: x.price, reverse=False)
+            elif self.comboBox.currentText() == "Price: High to Low":
+                results = sorted(
+                    results, key=lambda x: x.price, reverse=True)
 
             # Show results
             self.updateConsole("Creating Result Cards")
@@ -43,6 +72,23 @@ class MainWindow(QMainWindow):
                 card = ResultCard(result)
                 self.result_area_vertical_layout.addWidget(card)
                 i += 1
+
+    def refresh_button_clicked(self):
+        tracking = load_from_database(unique=True)
+        # This will return a list of records that have all
+        # unique products.
+
+        # Each record is also in the form of a list, so we can parse
+        # the record and get the product object
+        if tracking is not None:
+            for record in tracking:
+                product = Product(
+                    id=record[1], name=record[2], price=record[3], image_url=record[4], source=record[5])
+                card = ResultCard(product, OPTIONS)
+                self.tracking_area_vertical_layout.addWidget(card)
+        else:
+            self.updateConsole("No tracking records found")
+
 
     def setupUi(self):
         self.CONSOLE_TEXT = ""
@@ -63,11 +109,11 @@ class MainWindow(QMainWindow):
         self.central_vertical_layout.addWidget(self.tabWidget)
 
         """
-        ███████ ███████  █████  ██████   ██████ ██   ██ 
-        ██      ██      ██   ██ ██   ██ ██      ██   ██ 
-        ███████ █████   ███████ ██████  ██      ███████ 
-             ██ ██      ██   ██ ██   ██ ██      ██   ██ 
-        ███████ ███████ ██   ██ ██   ██  ██████ ██   ██ 
+        ███████ ███████  █████  ██████   ██████ ██   ██
+        ██      ██      ██   ██ ██   ██ ██      ██   ██
+        ███████ █████   ███████ ██████  ██      ███████
+             ██ ██      ██   ██ ██   ██ ██      ██   ██
+        ███████ ███████ ██   ██ ██   ██  ██████ ██   ██
         """
 
         self.search_tab = QWidget()
@@ -121,30 +167,63 @@ class MainWindow(QMainWindow):
         self.search_tab_vertical_layout.addWidget(self.scrollArea)
         # End Result Area
 
-        """        
-     ████████ ██████   █████   ██████ ██   ██ ██ ███    ██  ██████  
-        ██    ██   ██ ██   ██ ██      ██  ██  ██ ████   ██ ██       
-        ██    ██████  ███████ ██      █████   ██ ██ ██  ██ ██   ███ 
-        ██    ██   ██ ██   ██ ██      ██  ██  ██ ██  ██ ██ ██    ██ 
-        ██    ██   ██ ██   ██  ██████ ██   ██ ██ ██   ████  ██████                                                                                                                             
+        """
+     ████████ ██████   █████   ██████ ██   ██ ██ ███    ██  ██████
+        ██    ██   ██ ██   ██ ██      ██  ██  ██ ████   ██ ██
+        ██    ██████  ███████ ██      █████   ██ ██ ██  ██ ██   ███
+        ██    ██   ██ ██   ██ ██      ██  ██  ██ ██  ██ ██ ██    ██
+        ██    ██   ██ ██   ██  ██████ ██   ██ ██ ██   ████  ██████
         """
 
         self.tracking_tab = QWidget()
         self.tabWidget.addTab(self.tracking_tab, "Tracking")
 
+        self.tracking_tab_vertical_layout = QVBoxLayout(self.tracking_tab)
+        self.tracking_tab_vertical_layout.setContentsMargins(0, 0, 0, 0)
+        self.tracking_tab_vertical_layout.setSpacing(0)
+
+        self.tracking_tab_frame = QFrame(self.tracking_tab)
+        self.tracking_tab_frame.setMaximumSize(QtCore.QSize(16777215, 75))
+        self.tracking_tab_frame.setFrameShape(QFrame.StyledPanel)
+        self.tracking_tab_frame.setFrameShadow(QFrame.Raised)
+        self.tracking_tab_vertical_layout.addWidget(self.tracking_tab_frame)
+
+        # A button with the title "refresh"
+        self.refresh_button = QPushButton(self.tracking_tab_frame)
+        self.refresh_button.setMinimumSize(QtCore.QSize(0, 34))
+        self.refresh_button.setMaximumSize(QtCore.QSize(16777215, 34))
+        self.refresh_button.setText("Refresh")
+        self.tracking_tab_vertical_layout.addWidget(self.refresh_button)
+        # On clicking refresh button, refresh_button_clicked function will be called
+        self.refresh_button.clicked.connect(self.refresh_button_clicked)
+
+        # Scrollable view for tracking products
+        self.scrollArea_2 = QScrollArea(self.tracking_tab)
+        self.scrollArea_2.setWidgetResizable(True)
+
+        self.scrollAreaWidgetContents_2 = QWidget()
+        self.scrollAreaWidgetContents_2.setGeometry(
+            QtCore.QRect(0, 0, 781, 312))
+
+        self.tracking_area_vertical_layout = QVBoxLayout(
+            self.scrollAreaWidgetContents_2)
+        self.scrollArea_2.setWidget(self.scrollAreaWidgetContents_2)
+        self.tracking_tab_vertical_layout.addWidget(self.scrollArea_2)
+        # End Scrollable view for tracking products
+
         """
-         ██████  ██████  ████████ ██  ██████  ███    ██ ███████ 
-        ██    ██ ██   ██    ██    ██ ██    ██ ████   ██ ██      
-        ██    ██ ██████     ██    ██ ██    ██ ██ ██  ██ ███████ 
-        ██    ██ ██         ██    ██ ██    ██ ██  ██ ██      ██ 
-         ██████  ██         ██    ██  ██████  ██   ████ ███████                                                                                                             
+         ██████  ██████  ████████ ██  ██████  ███    ██ ███████
+        ██    ██ ██   ██    ██    ██ ██    ██ ████   ██ ██
+        ██    ██ ██████     ██    ██ ██    ██ ██ ██  ██ ███████
+        ██    ██ ██         ██    ██ ██    ██ ██  ██ ██      ██
+         ██████  ██         ██    ██  ██████  ██   ████ ███████
         """
 
         self.options_tab = QWidget()
         self.tabWidget.addTab(self.options_tab, "Options")
 
         self.options_tab_vertical_layout = QVBoxLayout(self.options_tab)
-        self.options_tab_vertical_layout.setContentsMargins(0, 0, 0, 0)
+        self.options_tab_vertical_layout.setContentsMargins(20, 20, 20, 20)
         self.options_tab_vertical_layout.setSpacing(0)
 
         # Create a checkbox with text "Debug" and add it to vertitcal layout of options tab
@@ -156,6 +235,34 @@ class MainWindow(QMainWindow):
         self.debug_checkbox.stateChanged.connect(
             lambda: self.set_debug(self.debug_checkbox.isChecked()))
 
+        # Create a horizontal layout called "debugfile_layout" and add it to
+        # vertical layout of options tab
+        self.debugfile_layout = QHBoxLayout()
+        self.options_tab_vertical_layout.addLayout(self.debugfile_layout)
+        self.debugfile_layout.setSpacing(10)
+
+        # Create a label called "debugfilelabel" with text as "Debug File: "
+        # and add it to debugfile_layout
+        self.debugfilelabel = QLabel(self.options_tab)
+        self.debugfilelabel.setText("Debug File: ")
+        self.debugfile_layout.addWidget(self.debugfilelabel)
+
+        # Create a textbox "debugfile_textbox"
+        self.debugfile_textbox = QLineEdit(self.options_tab)
+        self.debugfile_textbox.setText("test.txt")
+        self.debugfile_layout.addWidget(self.debugfile_textbox)
+
+        # Create a checkbox "Show product images" and add it to vertical layout of options tab
+        self.show_product_images_checkbox = QCheckBox(self.options_tab)
+        self.show_product_images_checkbox.setText("Show product images")
+        self.options_tab_vertical_layout.addWidget(
+            self.show_product_images_checkbox)
+
+        # If show_product_images_checkbox is checked then set show_product_images to True else set show_product_images to False
+        self.show_product_images_checkbox.stateChanged.connect(
+            lambda: self.set_show_product_images(self.show_product_images_checkbox.isChecked()))
+
+        # Creating a console_log widget
         self.console_log = QPlainTextEdit(self.centralwidget)
         self.console_log.setEnabled(True)
         self.console_log.setMaximumSize(QtCore.QSize(16777215, 200))
@@ -170,19 +277,21 @@ class MainWindow(QMainWindow):
         self.console_log.setCenterOnScroll(True)
         self.console_log.setPlaceholderText("")
         self.central_vertical_layout.addWidget(self.console_log)
+
+        # Creating a progressbar widget
         self.progressBar = QProgressBar(self.centralwidget)
         self.progressBar.setProperty("value", 0)
         self.progressBar.setTextVisible(False)
         self.central_vertical_layout.addWidget(self.progressBar)
         self.setCentralWidget(self.centralwidget)
+
+        # Creating a menubar
         self.menupdate_bar = QMenuBar(self)
         self.menupdate_bar.setGeometry(QtCore.QRect(0, 0, 805, 22))
         self.menuFile = QMenu(self.menupdate_bar)
         self.menuSettings = QMenu(self.menupdate_bar)
         self.menuAbout = QMenu(self.menupdate_bar)
         self.setMenuBar(self.menupdate_bar)
-        self.statusbar = QStatusBar(self)
-        self.setStatusBar(self.statusbar)
         self.actionQuit = QAction(self)
         self.actionShow_Logs = QAction(self)
         self.actionShow_Logs.setCheckable(True)
@@ -191,6 +300,10 @@ class MainWindow(QMainWindow):
         self.menupdate_bar.addAction(self.menuFile.menuAction())
         self.menupdate_bar.addAction(self.menuSettings.menuAction())
         self.menupdate_bar.addAction(self.menuAbout.menuAction())
+
+        # Creating a statusbar
+        self.statusbar = QStatusBar(self)
+        self.setStatusBar(self.statusbar)
 
         self.show()
 
@@ -219,5 +332,12 @@ class MainWindow(QMainWindow):
         self.console_log.moveCursor(QtGui.QTextCursor.End)
 
     def set_debug(self, debug):
-        self.DEBUG = debug
-        self.updateConsole("Debug set to " + str(self.DEBUG))
+        global OPTIONS
+        OPTIONS["debug"] = debug
+        self.updateConsole("Debug set to " + str(OPTIONS["debug"]))
+
+    def set_show_product_images(self, show_product_images):
+        global OPTIONS
+        OPTIONS["show_product_images"] = show_product_images
+        self.updateConsole("Show product images set to " + \
+                           str(OPTIONS["show_product_images"]))

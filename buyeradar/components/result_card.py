@@ -2,6 +2,7 @@ from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import *
 import requests
 
+
 from func import trim_name
 
 
@@ -9,7 +10,6 @@ class ResultCard(QWidget):
     def __init__(self, product):
         super().__init__()
         self.showUI(product)
-
 
     def showUI(self, product):
         self.resize(724, 200)
@@ -90,5 +90,85 @@ class ResultCard(QWidget):
         self.track_button.setText("Track")
 
         self.image = QtGui.QImage()
-        self.image.loadFromData(requests.get(product.image_url).content)
+        try:
+            self.image.loadFromData(requests.get(product.image_url).content)
+        except:
+            print("Could not load image")
         self.label_3.setPixmap(QtGui.QPixmap(self.image))
+    
+    def setConnections(self, product):
+        # When the track button is clicked save to dabase with product
+        self.track_button.clicked.connect(lambda: self.save_to_database(product))
+
+    def save_to_database(self, product):
+        import random
+            
+
+        id = product.id
+        name = product.name
+        price = product.price
+
+        # Code here to save to
+        # database
+
+        import sqlite3
+
+        conn=sqlite3.connect('project.db')
+        cursor=conn.cursor()
+
+        recordid=random.randint(10000,99999)
+        pid=id
+        pname=name
+        pprice=float(int(price))
+        psource="Amazon"
+
+        command = "insert into product values('{}','{}','{}','{}','{}');".format(recordid,pid,pname,pprice,psource)
+
+
+        cursor.execute(command)
+        conn.commit()
+        print("Saved in database")
+        cursor.close()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

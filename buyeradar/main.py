@@ -7,3 +7,8 @@ if __name__ == "__main__":
     ui = MainWindow()
     ui.setupUi()
     sys.exit(app.exec_())
+
+
+
+
+    
