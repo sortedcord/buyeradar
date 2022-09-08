@@ -1,17 +1,52 @@
+import pickle
+from func import load_unique_from_database
 from components.result_card import ResultCard
 from components.track_card import TrackCard
-from func import fetch_amazon_html, scrape_html, save_to_database, load_from_database, Product
+from func import fetch_amazon_html, scrape_html, Product
 from PyQt5 import QtGui
 from PyQt5.QtWidgets import *
 from PyQt5 import QtCore
 
+# Default Options
 OPTIONS = {
     "debug": False,
+    "debug_file": "test.txt",
     "show-images": True,
 }
 
 
 class MainWindow(QMainWindow):
+
+    """
+    This function is used to save the options dictionary to a file using pickle.
+    """
+    def save_options(self):
+        with open("options.dat", "wb") as f:
+            pickle.dump(OPTIONS, f)
+    
+    """
+    This function is used to load the options dictionary
+    form a file using pickle
+    """
+    def load_options(self):
+        try:
+            with open("options.dat", "rb") as f:
+                global OPTIONS
+                OPTIONS = pickle.load(f)
+        except:
+            """
+            If the file does not exist, then default values of 
+            options will be applied
+            """
+            self.updateConsole("No options.dat file found")
+        
+        # Update controls in the options tab.
+        self.debug_checkbox.setChecked(OPTIONS["debug"])
+        self.show_product_images_checkbox.setChecked(
+            OPTIONS["show-images"])
+        self.debugfile_textbox.setText(OPTIONS["debug_file"])
+        
+
     def update_bar(self, value):
         if self.progressBar.value() < 100:
             self.progressBar.setProperty(
@@ -35,7 +70,7 @@ class MainWindow(QMainWindow):
             pg_val = self.progressBar.setProperty
             pg_val('value', 0)
             soup = fetch_amazon_html(
-                search_query, self, OPTIONS["debug"], debugfile="test.txt")
+                search_query, self, OPTIONS["debug"], debugfile=OPTIONS["debug_file"])
 
             # if soup is none, then it means that no results were found
             if soup is None:
@@ -51,12 +86,11 @@ class MainWindow(QMainWindow):
                     pg_val('value', 100)
                     self.updateConsole("No results found")
                     return
+            pg_val('value', 100) # Update progressbar value to 100% 
 
-            pg_val('value', 100)
 
             # Sort the results based on what the user selected from
             # the combolist
-
             if self.comboBox.currentText() == "Price: Low to High":
                 results = sorted(
                     results, key=lambda x: x.price, reverse=False)
@@ -69,28 +103,38 @@ class MainWindow(QMainWindow):
             QApplication.processEvents()
             i = 0
             for result in results:
-                card = ResultCard(result)
+                card = ResultCard(result, OPTIONS)
                 self.result_area_vertical_layout.addWidget(card)
                 i += 1
 
     def refresh_button_clicked(self):
-        tracking = load_from_database(unique=True)
+        tracking = load_unique_from_database()
         # This will return a list of records that have all
         # unique products.
+
+        # Remove all exisiting results
+        for i in reversed(range(self.tracking_area_vertical_layout.count())):
+            self.tracking_area_vertical_layout.itemAt(
+                i).widget().setParent(None)
+
 
         # Each record is also in the form of a list, so we can parse
         # the record and get the product object
         if tracking is not None:
             for record in tracking:
                 product = Product(
-                    id=record[1], name=record[2], price=record[3], image_url=record[4], source=record[5])
-                card = ResultCard(product, OPTIONS)
+                    id=record[1], name=record[2], price=record[3], image_url=record[5], source=record[4])
+                card = TrackCard(product, OPTIONS, self)
                 self.tracking_area_vertical_layout.addWidget(card)
         else:
             self.updateConsole("No tracking records found")
 
 
     def setupUi(self):
+
+        #Set secondary window as none
+        self.a = None
+
         self.CONSOLE_TEXT = ""
 
         self.setWindowTitle("Buyeradar")

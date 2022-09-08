@@ -4,16 +4,23 @@ from PyQt5.QtWidgets import QApplication
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+import sqlite3
 
 
 class Product():
+    """
+    All classes have a function called __init__(), which is always executed when the class is being initiated.
+    Use the __init__() function to assign values to object properties when the object is being created
+    """
+
     def __init__(self, id, price, name, image_url, source="Amazon"):
         self.id = id
         self.name = name
         self.image_url = image_url
         self.price = price
         self.source = source
-    
+
+    # This method is invoked when the object is printed
     def __str__(self) -> str:
         return f"Product: {self.name} from {self.source} with price {self.price}"
 
@@ -64,7 +71,7 @@ def fetch_amazon_html(query, mwindow, debug, debugfile=None):
         chrome_options = Options()
         chrome_options.add_argument("--headless")
         chrome_options.add_experimental_option(
-        "excludeSwitches", ["enable-logging"])
+            "excludeSwitches", ["enable-logging"])
         QApplication.processEvents()  # Used to prevent application from not responding
         driver = webdriver.Chrome(chrome_options=chrome_options)
         update_bar(10)
@@ -91,7 +98,7 @@ def fetch_amazon_html(query, mwindow, debug, debugfile=None):
                 f.write(driver.page_source)
                 # Update console with suitable message
                 update_console("Saved HTML to test.txt")
-        
+
         # if the page source contains the string "No results for " then return None
         if "No results for " in str(driver.page_source):
             update_console("No results found")
@@ -105,16 +112,23 @@ instead of the product name
 """
 
 
-def fetch_amazon_page_content(url, mwindow):
+def fetch_amazon_page_content(url, mwindow=None):
     # The user has entered the product url, so the function will fetch
     # information from the product page and not the search page.
 
-    update_bar = mwindow.update_bar
-    update_console = mwindow.updateConsole
+    if mwindow is not None:
+        update_bar = mwindow.update_bar
+        update_console = mwindow.updateConsole
+    else:
+        mwindow.updateConsole = print
+        update_bar = print
 
     mwindow.updateConsole("Setting Chrome Options")
     chrome_options = Options()
+    # Headless options hides the browser window from showing up
     chrome_options.add_argument("--headless")
+    # These options are used to prevent the browser from
+    # logging unnecessary information
     chrome_options.add_experimental_option(
         "excludeSwitches", ["enable-logging"])
 
@@ -122,7 +136,8 @@ def fetch_amazon_page_content(url, mwindow):
     driver = webdriver.Chrome(chrome_options=chrome_options)
     update_bar(10)
 
-    # Extract the ASIN from the url
+    # We will try to get the ASIN number from the URL that the user has
+    # provided and then reformat it again to fetch the product page
     try:
         asin = url.split("/dp/")[1].split("/")[0]
     except:  # If the url is invalid, return None
@@ -191,39 +206,44 @@ def scrape_html(soup, mwindow):
     for product in product_soups:
         if _x > 15:
             break
-        # Get the displayed price of the product from HTML
 
+        # Get the displayed price of the product from HTML
         update_console(f"[Product {_x+1}] Fetching Price")
         try:
+            # Try to find the HTML tag that has the class containing "a-price-whole"
             price = product.select_one("span[class*='price-whole']").text
+            # Remove the commas from the price
             price = price.replace(',', '').split(".")[0]
             price = int(price)
         except AttributeError:
+            # If the price is not found using the above route
             price = "0"
         else:
             update_console(f"[Product {_x+1}] Fetched Price Successfully")
 
         # Fetch the product title from HTML
         try:
+            # Try to find the HTML tag that has the class containing "a-size-medium"
             name = product.select_one(
                 "span[class*='a-size-medium']").text
         except AttributeError:
+            # If the product name is not found using the above route
+            # then try to find the HTML tag that has the class containing "a-size-base-plus"
             try:
                 name = product.select_one(
                     "span[class*='a-size-base-plus']").text
             except AttributeError:
+                # If the product name is still not found:
                 name = 'NAN'
 
             else:
                 update_console(f"[Product {_x+1}] Fetched name successfully")
         else:
             update_console(f"[Product {_x+1}] Fetched name successfully")
-        
-        if name=="[document]":
-            return
 
         # Get the image URL from HTML
         try:
+            # Try to find the HTML tag that has the class containing "s-image"
             image_url = product.select_one(
                 "img[class*='s-image']").attrs['src']
         except:
@@ -249,23 +269,25 @@ def trim_name(string):
 
 
 def save_to_database(product):
-    import random
+    print("Tack button clicked")
 
     pid = product.id
     pname = product.name
+    image_url = product.image_url
     pprice = float(int(product.price))
-    recordid = random.randint(10000, 99999)
-    psource = "Amazon"
+    recordid = random.randint(100, 999)
+
+    # Get the current date time in the format of 2020-05-09 04:01:02
+    recordtime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    psource = "amazon.in"
 
     # Code here to save to
     # database
 
-    import sqlite3
-
     conn = sqlite3.connect('project.db')
     cursor = conn.cursor()
 
-    command = f"insert into product values('{recordid}','{pid}','{pname}','{pprice}','{psource}');"
+    command = f"insert into product values('{recordid}','{pid}','{pname}','{pprice}','{psource}', '{image_url}', '{recordtime}');"
 
     cursor.execute(command)
     conn.commit()
@@ -275,24 +297,24 @@ def save_to_database(product):
 
 def load_unique_from_database():
 
-    # from project.db load all the distinct records
-    # and return a list of product objects
-
-    import sqlite3
     conn = sqlite3.connect('project.db')
     cursor = conn.cursor()
-    command = "select distinct pid, recordid, pname, pprice, psource, image_url, recordtime from product order by recordtime DESC;"
-    cursor.execute(command)
-    data = cursor.fetchall()
-    cursor.close()
 
-    return data    
+    command3 = "select * from product"
+    cursor.execute(command3)
+
+    tuple2 = cursor.fetchall()
+    dictionary = {}
+    for i in range(len(tuple2)):
+        dictionary[tuple2[i][1]] = tuple2[i]
+    info_of_unique_pid = list(dictionary.values())
+    return info_of_unique_pid
+
 
 def load_single_product(pid):
     # Takes in the product id as the argument and returns all the records
     # of that specific product in descing order based on time of the entry
 
-    import sqlite3
     conn = sqlite3.connect('project.db')
     cursor = conn.cursor()
     command = f"select * from product where pid='{pid}' order by recordtime DESC;"
@@ -302,10 +324,10 @@ def load_single_product(pid):
 
     return data
 
+
 def create_table(dummy=True):
     # Creates a table in the database if it does not exist
 
-    import sqlite3
     conn = sqlite3.connect('project.db')
     cursor = conn.cursor()
     command = """create table if not exists 
@@ -319,27 +341,26 @@ recordtime datetime default current_timestamp);"""
 
     cursor.execute(command)
     conn.commit()
-    # Create dummy data
+    # If the user sets dummy to true, then the function will create
+    # dummy/random records to add to the database table
     if dummy:
         for i in range(10):
-            product_id = random.randint(1000000000,9999999999)
+            product_id = random.randint(1000000000, 9999999999)
             product_name = f"Dummy Product {random.randint(1,100)}"
-            for j in range(random.randint(0,10)):
-                price = random.randint(1000,9999)
-                record_id = random.randint(100,999)
+            for j in range(random.randint(0, 10)):
+                price = random.randint(1000, 9999)
+                record_id = random.randint(100, 999)
                 datetime = f"2020-0{random.randint(1,9)}-0{random.randint(1,9)} 0{random.randint(1,9)}:0{random.randint(1,9)}:0{random.randint(1,9)}"
                 command = f"insert into product values('{record_id}','{product_id}','{product_name}','{price}','amazon.in','https://images-na.ssl-images-amazon.com/images/I/71ZyNqZQJlL._AC_SL1500_.jpg','{datetime}');"
                 cursor.execute(command)
                 conn.commit()
-                j+= 1
+                j += 1
             # asd = random_datetime.strftime("%Y-%m-%d %H:%M:%S")
-            i+=1
+            i += 1
     cursor.close()
 
 
 if __name__ == "__main__":
     print("This is a module, not a script. Please run main.py instead")
-    # create_table()
 
-    data = load_single_product(pid="8593276755")
-    print(data)
+    load_unique_from_database()
