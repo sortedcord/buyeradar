@@ -1,6 +1,7 @@
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import *
 import requests
+from func import load_single_product
 from screens.productWindow import ProductWindow
 
 from func import trim_name
@@ -33,7 +34,6 @@ class TrackCard(QWidget):
         self.verticalLayout_2 = QVBoxLayout(self.main_frame)
 
         self.product_name_label = QLabel(self.main_frame)
-        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         font = QtGui.QFont()
         font.setFamily("Segoe UI")
         font.setPointSize(14)
@@ -42,11 +42,6 @@ class TrackCard(QWidget):
         self.product_name_label.setFont(font)
         self.verticalLayout_2.addWidget(self.product_name_label)
         self.product_source_label = QLabel(self.main_frame)
-        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.product_source_label.sizePolicy().hasHeightForWidth())
-        self.product_source_label.setSizePolicy(sizePolicy)
         font = QtGui.QFont()
         font.setPointSize(10)
         font.setBold(False)
@@ -59,7 +54,8 @@ class TrackCard(QWidget):
         self.product_id.setFont(font)
         self.product_id.setStyleSheet("color: rgb(202, 202, 202);")
         self.verticalLayout_2.addWidget(self.product_id)
-        spacerItem = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        spacerItem = QSpacerItem(
+            20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
         self.verticalLayout_2.addItem(spacerItem)
         self.product_price_label = QLabel(self.main_frame)
         font = QtGui.QFont()
@@ -75,7 +71,8 @@ class TrackCard(QWidget):
         sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.view_more_button.sizePolicy().hasHeightForWidth())
+        sizePolicy.setHeightForWidth(
+            self.view_more_button.sizePolicy().hasHeightForWidth())
         self.view_more_button.setSizePolicy(sizePolicy)
         self.view_more_button.setMinimumSize(QtCore.QSize(125, 35))
         font = QtGui.QFont()
@@ -91,14 +88,36 @@ class TrackCard(QWidget):
         self.product_source_label.setText(f"Fetched from {product.source}")
         self.product_id.setText(f"ID: {product.id}")
         self.product_price_label.setText(f"CURRENTLY: INR {product.price}")
-        self.product_price_cal_label.setText("Max: Min: Avg: ")
+
+        try:
+            table = load_single_product(product.id)
+        except:
+            print("Could not load table")
+        else:
+            prices = []
+            for row in table:
+                prices.append(row[3])
+
+            # Get average value of all elements in prices list
+            avg = sum(prices) / len(prices)
+            # round to 2 decimal places
+            avg = round(avg, 2)
+
+            # Get the minimum value of all elements in prices list
+            min_price = min(prices)
+
+            # Get the maximum value of all elements in prices list
+            max_price = max(prices)
+
+        self.product_price_cal_label.setText(
+            f"Max: {max_price} Min: {min_price} Avg: {avg}")
         self.view_more_button.setText("View")
 
-        self.view_more_button.clicked.connect(lambda: self.view_more_button_clicked(product, OPTIONS, mainwindow))
+        self.view_more_button.clicked.connect(
+            lambda: self.view_more_button_clicked(product, OPTIONS, mainwindow))
 
     def view_more_button_clicked(self, product, OPTIONS, mainwindow):
         print("View more button clicked")
 
         mainwindow.a = ProductWindow(product, OPTIONS)
         mainwindow.a.show()
-        

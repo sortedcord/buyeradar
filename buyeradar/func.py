@@ -120,8 +120,17 @@ def fetch_amazon_page_content(url, mwindow=None):
         update_bar = mwindow.update_bar
         update_console = mwindow.updateConsole
     else:
-        mwindow.updateConsole = print
-        update_bar = print
+        # This would happen if the function is not called from the main window
+        # Create a dummy class instead
+        class mwindow():
+            def update_bar(value):
+                pass
+
+            def updateConsole(value):
+                pass
+        
+        update_bar = mwindow.update_bar
+        update_console = mwindow.updateConsole
 
     mwindow.updateConsole("Setting Chrome Options")
     chrome_options = Options()
@@ -274,8 +283,27 @@ def save_to_database(product):
     pid = product.id
     pname = product.name
     image_url = product.image_url
-    pprice = float(int(product.price))
-    recordid = random.randint(100, 999)
+    pprice = float(int(str(product.price).split('.')[0]))
+    while True:
+        flag = True
+        recordid = random.randint(100, 999)
+
+        # Check whether recordid is already there or not
+        conn = sqlite3.connect('project.db')
+        cursor = conn.cursor()
+
+        command = f"select recordid from product;"
+        cursor.execute(command)
+
+        data = cursor.fetchall()
+        for i in data:
+            if recordid == i[0]:
+                flag = True
+            else:
+                flag = False
+        if not flag:
+            break
+
 
     # Get the current date time in the format of 2020-05-09 04:01:02
     recordtime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")

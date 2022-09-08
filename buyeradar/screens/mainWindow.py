@@ -1,4 +1,5 @@
 import pickle
+import time
 from func import load_unique_from_database
 from components.result_card import ResultCard
 from components.track_card import TrackCard
@@ -53,6 +54,7 @@ class MainWindow(QMainWindow):
                 "value", self.progressBar.value()+value)
 
     def search_button_clicked(self):
+        self.save_options()
         search_query = self.search_query_textbox.toPlainText()
 
         # Validating search query to be blank or not
@@ -96,7 +98,7 @@ class MainWindow(QMainWindow):
                     results, key=lambda x: x.price, reverse=False)
             elif self.comboBox.currentText() == "Price: High to Low":
                 results = sorted(
-                    results, key=lambda x: x.price, reverse=True)
+                    results, key=lambda x: int(x.price), reverse=True)
 
             # Show results
             self.updateConsole("Creating Result Cards")
@@ -306,6 +308,8 @@ class MainWindow(QMainWindow):
         self.show_product_images_checkbox.stateChanged.connect(
             lambda: self.set_show_product_images(self.show_product_images_checkbox.isChecked()))
 
+        
+
         # Creating a console_log widget
         self.console_log = QPlainTextEdit(self.centralwidget)
         self.console_log.setEnabled(True)
@@ -330,20 +334,26 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.centralwidget)
 
         # Creating a menubar
-        self.menupdate_bar = QMenuBar(self)
-        self.menupdate_bar.setGeometry(QtCore.QRect(0, 0, 805, 22))
-        self.menuFile = QMenu(self.menupdate_bar)
-        self.menuSettings = QMenu(self.menupdate_bar)
-        self.menuAbout = QMenu(self.menupdate_bar)
-        self.setMenuBar(self.menupdate_bar)
+        self.menu_bar_ = QMenuBar(self)
+        self.menu_bar_.setGeometry(QtCore.QRect(0, 0, 805, 22))
+
+        self.menuFile = QMenu(self.menu_bar_)
         self.actionQuit = QAction(self)
-        self.actionShow_Logs = QAction(self)
-        self.actionShow_Logs.setCheckable(True)
+        self.actionQuit.setText("Quit")
         self.menuFile.addAction(self.actionQuit)
+        self.menu_bar_.addAction(self.menuFile.menuAction())
+
+        # When quit action is triggered, quit function will be called
+        self.actionQuit.triggered.connect(self.close)
+
+        self.menuSettings = QMenu(self.menu_bar_)
+        self.setMenuBar(self.menu_bar_)
+        self.actionShow_Logs = QAction(self)
         self.menuSettings.addAction(self.actionShow_Logs)
-        self.menupdate_bar.addAction(self.menuFile.menuAction())
-        self.menupdate_bar.addAction(self.menuSettings.menuAction())
-        self.menupdate_bar.addAction(self.menuAbout.menuAction())
+        self.menu_bar_.addAction(self.menuSettings.menuAction())
+
+        # When show logs action is triggered, toggle_logs function will be called
+        self.actionShow_Logs.triggered.connect(self.toggle_logs)
 
         # Creating a statusbar
         self.statusbar = QStatusBar(self)
@@ -360,15 +370,15 @@ class MainWindow(QMainWindow):
         self.search_button.setText("Search")
         self.menuFile.setTitle("File")
         self.menuSettings.setTitle("Settings")
-        self.menuAbout.setTitle("About")
-        self.actionQuit.setText("Quit")
-        self.actionShow_Logs.setText("Show Logs")
+        self.actionShow_Logs.setText("Hide Logs")
 
         self.updateConsole("Buyeradar v0.0.1")
         self.updateConsole("")
         self.updateConsole("")
 
         self.search_button.clicked.connect(self.search_button_clicked)
+
+        self.load_options()
 
     def updateConsole(self, message):
         self.CONSOLE_TEXT += message + "\n"
@@ -382,6 +392,14 @@ class MainWindow(QMainWindow):
 
     def set_show_product_images(self, show_product_images):
         global OPTIONS
-        OPTIONS["show_product_images"] = show_product_images
+        OPTIONS["show-images"] = show_product_images
         self.updateConsole("Show product images set to " + \
-                           str(OPTIONS["show_product_images"]))
+                           str(OPTIONS["show-images"]))
+
+    def toggle_logs(self):
+        if self.console_log.isVisible():
+            self.console_log.hide()
+            self.actionShow_Logs.setText("Show Logs")
+        else:
+            self.console_log.show()
+            self.actionShow_Logs.setText("Hide Logs")

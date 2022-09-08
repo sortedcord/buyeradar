@@ -1,3 +1,4 @@
+import time
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import *
 from func import save_to_database
@@ -92,14 +93,13 @@ class ResultCard(QWidget):
         self.verticalLayout.addWidget(self.track_button)
 
         # Set the image if options does not have it disabled
-        if not OPTIONS["show-images"]:
-            self.image_label.hide()
-        self.image = QtGui.QImage()
-        try:
-            self.image.loadFromData(requests.get(product.image_url).content)
-        except:
-            print("Could not load image")
-        self.image_label.setPixmap(QtGui.QPixmap(self.image))
+        if  OPTIONS["show-images"]:
+            self.image = QtGui.QImage()
+            try:
+                self.image.loadFromData(requests.get(product.image_url).content)
+            except:
+                print("Could not load image")
+            self.image_label.setPixmap(QtGui.QPixmap(self.image))
 
     def setConnections(self, product):
         # When the track button is clicked save to dabase with product
